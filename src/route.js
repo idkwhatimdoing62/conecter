@@ -1,0 +1,1 @@
+const match=location.pathname.match(/^\/s\/([A-Za-z0-9]+)/);if(match){setTimeout(()=>{document.querySelector('#getTab')?.click();const input=document.querySelector('#code');if(input){input.value=match[1].toUpperCase();input.dispatchEvent(new Event('input',{bubbles:true}))}},0)}

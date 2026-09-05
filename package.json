@@ -1,0 +1,1 @@
+{"scripts":{"dev":"vite --host 0.0.0.0 --port 5174","server":"go run .","server:go":"go run .","build":"vite build","build:go":"go build -o conecter.exe ."},"dependencies":{"vite":"latest"},"devDependencies":{}}
