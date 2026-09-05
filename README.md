@@ -15,8 +15,8 @@
 
 双击 `start-conecter.bat`。脚本会启动 Go 服务和前端页面，并显示局域网访问地址。
 
-- 本机访问：`http://localhost:5174/`
-- 局域网访问：使用启动窗口显示的 LAN 地址
+- 本机访问：开发模式为 `http://localhost:5174/`；纯发布包为 `http://localhost:5173/`
+- 局域网访问：使用启动窗口显示的 LAN 地址和端口
 - API 服务：`http://localhost:5173/`
 
 首次启动会自动创建 `uploads` 目录和 `shares.json`。这两个运行时文件不会提交到仓库。
@@ -38,7 +38,7 @@ npm run build:go
 npm run dev
 ```
 
-Go 服务和前端分别使用 5173、5174 端口。
+开发模式下 Go 服务和 Vite 前端分别使用 5173、5174 端口；纯发布包没有 Node.js 时，Go 会直接在 5173 提供已构建页面。
 
 ## 使用流程
 
