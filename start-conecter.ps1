@@ -27,7 +27,7 @@ Set-Location -LiteralPath $projectRoot
 # Source checkouts can rebuild automatically; release ZIPs already contain the binary.
 $goCommand = Get-Command go.exe -ErrorAction SilentlyContinue
 if ($goCommand) {
-    $goSources = Get-ChildItem -LiteralPath $projectRoot -Filter '*.go' -File
+    $goSources = Get-ChildItem -LiteralPath $projectRoot -Filter '*.go' -File -Recurse
     $newestSource = $goSources | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     $needsGoBuild = -not (Test-Path -LiteralPath $goExecutable)
     if (-not $needsGoBuild -and $newestSource) {
@@ -35,7 +35,7 @@ if ($goCommand) {
     }
     if ($needsGoBuild) {
         Write-Host '正在构建 Go 服务...' -ForegroundColor DarkGray
-        & $goCommand.Source build -o $goExecutable .
+        & $goCommand.Source build -o $goExecutable ./cmd/conecter
         if ($LASTEXITCODE -ne 0) {
             Write-Host 'Go 构建失败。' -ForegroundColor Red
             exit 1

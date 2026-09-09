@@ -7,3 +7,6 @@ conecter.exe~
 .DS_Store
 Thumbs.db
 browser-test.txt
+
+# Local release artifacts
+artifacts/

@@ -114,3 +114,42 @@ func TestDownloadAllIncludesEveryFile(t *testing.T) {
 		}
 	}
 }
+
+func TestRevokeRequiresToken(t *testing.T) {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tempDir := t.TempDir()
+	if err := os.Chdir(tempDir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(workingDir) })
+	file, err := os.CreateTemp(t.TempDir(), "revoke-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := file.Name()
+	_ = file.Close()
+	previous := shares
+	shares = map[string]Share{"ABC234": {ID: "ABC234", RevokeToken: "secret-token", Expires: time.Now().Add(time.Hour).UnixMilli(), Files: []Asset{{Path: path}}}}
+	t.Cleanup(func() { shares = previous })
+
+	for _, token := range []string{"", "wrong-token"} {
+		recorder := httptest.NewRecorder()
+		request := httptest.NewRequest(http.MethodDelete, "/api/shares/ABC234", nil)
+		request.Header.Set("X-Revoke-Token", token)
+		revoke(recorder, request)
+		if recorder.Code != http.StatusNotFound {
+			t.Fatalf("revoke token %q status = %d, want 404", token, recorder.Code)
+		}
+	}
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodDelete, "/api/shares/ABC234", nil)
+	request.Header.Set("X-Revoke-Token", "secret-token")
+	revoke(recorder, request)
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("valid revoke status = %d, want 204", recorder.Code)
+	}
+}

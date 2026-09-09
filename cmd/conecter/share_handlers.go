@@ -33,6 +33,11 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, map[string]string{"error": "无法生成分享码"}, 500)
 		return
 	}
+	revokeSecret, err := revokeToken()
+	if err != nil {
+		jsonOut(w, map[string]string{"error": "无法生成撤销凭证"}, 500)
+		return
+	}
 	for {
 		mu.RLock()
 		_, ok := shares[id]
@@ -47,7 +52,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	now := time.Now()
-	share := Share{ID: id, CreatedAt: now.UnixMilli(), Expires: now.Add(24 * time.Hour).UnixMilli()}
+	share := Share{ID: id, RevokeToken: revokeSecret, CreatedAt: now.UnixMilli(), Expires: now.Add(24 * time.Hour).UnixMilli()}
 	created := []string{}
 	failed := false
 	for i, header := range parts {
@@ -95,7 +100,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, map[string]string{"error": "保存分享信息失败"}, 500)
 		return
 	}
-	jsonOut(w, map[string]any{"id": id, "expires": share.Expires, "url": "/s/" + id}, 200)
+	jsonOut(w, map[string]any{"id": id, "expires": share.Expires, "url": "/s/" + id, "revokeToken": share.RevokeToken}, 200)
 }
 
 func getShare(w http.ResponseWriter, r *http.Request) {
@@ -166,6 +171,11 @@ func revoke(w http.ResponseWriter, r *http.Request) {
 	}
 	mu.Lock()
 	share, ok := shares[id]
+	if ok && !secureTokenEqual(share.RevokeToken, r.Header.Get("X-Revoke-Token")) {
+		mu.Unlock()
+		http.NotFound(w, r)
+		return
+	}
 	if ok {
 		for _, file := range share.Files {
 			_ = os.Remove(file.Path)

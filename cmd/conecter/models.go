@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"path/filepath"
@@ -17,10 +19,11 @@ type Asset struct {
 }
 
 type Share struct {
-	ID        string  `json:"id"`
-	CreatedAt int64   `json:"createdAt"`
-	Expires   int64   `json:"expires"`
-	Files     []Asset `json:"files"`
+	ID          string  `json:"id"`
+	RevokeToken string  `json:"revokeToken,omitempty"`
+	CreatedAt   int64   `json:"createdAt"`
+	Expires     int64   `json:"expires"`
+	Files       []Asset `json:"files"`
 }
 
 type publicFile struct {
@@ -88,6 +91,21 @@ func code() (string, error) {
 		b[i] = chars[int(b[i])%len(chars)]
 	}
 	return string(b), nil
+}
+
+func revokeToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+func secureTokenEqual(expected, provided string) bool {
+	if expected == "" || provided == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(expected), []byte(provided)) == 1
 }
 
 func jsonOut(w http.ResponseWriter, v any, status int) {

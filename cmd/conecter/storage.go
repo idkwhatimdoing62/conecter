@@ -71,6 +71,21 @@ func load() error {
 		loaded = make(map[string]Share)
 	}
 	shares = loaded
+	needsSave := false
+	for id, share := range shares {
+		if share.RevokeToken == "" {
+			token, tokenErr := revokeToken()
+			if tokenErr != nil {
+				return fmt.Errorf("generate revoke token for %s: %w", id, tokenErr)
+			}
+			share.RevokeToken = token
+			shares[id] = share
+			needsSave = true
+		}
+	}
+	if needsSave {
+		return save()
+	}
 	return nil
 }
 
